@@ -6,7 +6,7 @@
 #pragma warning(disable:4996)
 #define LPC_MESSAGE_DATA_BUFFER(_lm_, type)\
 	reinterpret_cast<type>(reinterpret_cast<size_t>(_lm_) + LPC_MESSAGE_LENGTH_64)
-using namespace Boringsoft::str;
+
 typedef struct _SERVICE_ROUTINE {
 	HANDLE hPort;
 	HANDLE hServerPort;
@@ -324,7 +324,7 @@ NTSTATUS BSAPI ScRegisterServiceRoutineW(
 	*hServiceRoutine = nullptr;
 	if (!(lpCapturedParameters = RtlCaptureParameters(lpParameters))) {
 		RtlFreeUnicodeString(&us);
-		return STATUS_INVALID_PARAMETER;
+		return STATUS_INVALID_PARAMETER_3;
 	}
 	if (!NT_SUCCESS(NtCreatePort(&hPort, &oa, ulMaxConnectionSize, ulMaxMessageSize, nullptr))) {
 		delete[]reinterpret_cast<LPVOID>(lpCapturedParameters);
