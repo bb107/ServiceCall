@@ -79,6 +79,9 @@
 #define LPC_MESSAGE_DATA_BUFFER(_lm_, type)\
 	reinterpret_cast<type>(reinterpret_cast<size_t>(_lm_) + system_lpc_message_length)
 
+
+#define PARAMETER_BUFFER_SIZE(_number_of_parameters_) (sizeof(DWORD64) + sizeof(SERVICE_PARAMETER_BLOB) * _number_of_parameters_)
+
 //调用参数结构
 //Service call parameter
 typedef struct _SERVICE_PARAMETER_BLOB {
