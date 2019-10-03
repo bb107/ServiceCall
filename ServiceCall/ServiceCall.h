@@ -76,6 +76,9 @@
 #define RtlServiceParametersPtr(_service_parameter_, _index_, _type_, _value_, _max_buffer_size_) \
 	RtlInitializeParameterBlobPtr((_service_parameter_->Parameters + _index_), (_type_), (_value_), (_max_buffer_size_))
 
+#define LPC_MESSAGE_DATA_BUFFER(_lm_, type)\
+	reinterpret_cast<type>(reinterpret_cast<size_t>(_lm_) + system_lpc_message_length)
+
 //调用参数结构
 //Service call parameter
 typedef struct _SERVICE_PARAMETER_BLOB {
@@ -124,6 +127,7 @@ PSERVICE_ROUTINE_PARAMETER RtlMapPtrParameters(HANDLE hProcess, PSERVICE_ROUTINE
 void RtlUnmapPtrParameters(PSERVICE_ROUTINE_PARAMETER lpParametersToUnmap);
 bool RtlSyncMappedPtrParameters(HANDLE hClientProcess, PSERVICE_ROUTINE_PARAMETER lpClientPara, PSERVICE_ROUTINE_PARAMETER lpMappedPara);
 bool RtlEqualParameterType(PSERVICE_ROUTINE_PARAMETER p1, PSERVICE_ROUTINE_PARAMETER p2);
+DWORD RtlSystemLpcMessageLength();
 /*
  * return:
  *	STATUS_SUCCESS

@@ -4,8 +4,6 @@
 #include "ntstatus.h"
 #include <vector>
 #pragma warning(disable:4996)
-#define LPC_MESSAGE_DATA_BUFFER(_lm_, type)\
-	reinterpret_cast<type>(reinterpret_cast<size_t>(_lm_) + LPC_MESSAGE_LENGTH_64)
 
 typedef struct _SERVICE_ROUTINE {
 	HANDLE hPort;
@@ -157,6 +155,16 @@ bool RtlEqualParameterType(PSERVICE_ROUTINE_PARAMETER p1, PSERVICE_ROUTINE_PARAM
 	return true;
 }
 
+DWORD RtlSystemLpcMessageLength() {
+	SYSTEM_INFO info;
+	GetNativeSystemInfo(&info);
+	switch (info.wProcessorArchitecture) {
+	case PROCESSOR_ARCHITECTURE_INTEL:return LPC_MESSAGE_LENGTH_32;
+	case PROCESSOR_ARCHITECTURE_AMD64:return LPC_MESSAGE_LENGTH_64;
+	default:return 0;
+	}
+}
+
 //查询调用客户端id, 只能由服务例程调用, 进程句柄将在服务例程返回后失效.
 NTSTATUS RtlSafeThreadServiceClientId(PHANDLE hProcess, PDWORD lpdwProcessId) {
 	NTSTATUS result = STATUS_NOT_FOUND;
@@ -218,7 +226,7 @@ DWORD WINAPI WorkerThread(LPVOID lpParameters) {
 		RtlUnmapPtrParameters(lpMappedParam);
 	}
 
-	lpService->lm->u1.s1.TotalLength = LPC_MESSAGE_LENGTH_64 + sizeof(NTSTATUS);
+	lpService->lm->u1.s1.TotalLength = system_lpc_message_length + sizeof(NTSTATUS);
 	lpService->lm->u1.s1.DataLength = sizeof(NTSTATUS);
 	NtReplyWaitReplyPort(lpService->hServerPort, lpService->lm);
 
@@ -282,6 +290,7 @@ NTSTATUS BSAPI ScInitializeService() {
 	if (lpCriticalSection)return STATUS_SUCCESS;
 	InitializeCriticalSection(lpCriticalSection = new CRITICAL_SECTION);
 	client_id_list = new CLIENT_ID_LIST(0);
+	system_lpc_message_length = RtlSystemLpcMessageLength();
 	return STATUS_SUCCESS;
 }
 
@@ -414,7 +423,8 @@ NTSTATUS BSAPI ScServiceCallW(
 	status = STATUS_UNSUCCESSFUL;
 	if (NT_SUCCESS(NtRequestWaitReplyPort(hPort, lm, lm))) {
 		status = STATUS_SUCCESS;
-		if (!IsBadWritePtr(lpServiceStatus, sizeof(NTSTATUS)))*lpServiceStatus = *LPC_MESSAGE_DATA_BUFFER(lm, PNTSTATUS);
+		if (!system_lpc_message_length)system_lpc_message_length = RtlSystemLpcMessageLength();
+		if (lpServiceStatus && !IsBadWritePtr(lpServiceStatus, sizeof(NTSTATUS)))*lpServiceStatus = *LPC_MESSAGE_DATA_BUFFER(lm, PNTSTATUS);
 	}
 	lm->u1.s1.DataLength = 0;
 	NtReplyPort(hPort, lm);
