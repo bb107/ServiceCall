@@ -132,3 +132,5 @@ NTSTATUS BSAPI ScServiceCallW(
 //	query process information, dup handle, create thread, virtual memory operation.
 bool BSAPI RtlClientId(PHANDLE hClientProcess, PDWORD lpdwClientProcessId);
 ```
+## Test screenshots	(测试截图)
+![alt text](screenshots/test.png?raw=true "test1")
